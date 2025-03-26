@@ -9,7 +9,7 @@ Implement a PyTorch layer (inherit a class from `torch.nn.Module`) for extractio
     - Implementation notes:
         - In this exercise we use [**hann** window](https://pytorch.org/docs/stable/generated/torch.hann_window.html) only
         - Also, power spectrum of spectrogram has to be used
-        - No `torchaudio` functions calls are allowed in this layer implementation
+        - No `torchaudio` functions calls are allowed in this layer implementation other than already provided (i.e. `F.melscale_fbanks()` and `torchaudio.load()` are allowed)
     - Evaluation:
         - For an arbitrary audiofile of 16 kHz sampling frequency, plot the Log MelFilterbanks output versus native `torchaudio.transforms.MelSpectrogram` implementation and attach plots to the report
         - Don't forget that natural `torchaudio.transforms.MelSpectrogram` doesn't apply logarithm
@@ -44,7 +44,7 @@ Train a simple CNN model with `LogMelFilterBanks` features for a binary classifi
     - Use `from torchaudio.datasets import SPEECHCOMMANDS` dataset
     - Convert multi-classification problem into a **binary classification** problem by utilization of two `**"YES"**` and `**"NO"**` target classes only
     - Use provided by default training/validation/testing splits of data
-    - Define a custom model architecture (based on [`torch.nn.Conv2d`](https://pytorch.org/docs/stable/generated/torch.nn.Conv2d.html))
+    - Define a custom model architecture (based on [`torch.nn.Conv1d`](https://pytorch.org/docs/stable/generated/torch.nn.Conv1d.html))
     - You can use [PyTorch Lightning](https://lightning.ai/docs/pytorch/stable/) in this exercise
     - Track (log) **train loss**, **validation accuracy** and **epoch training time** (no matter what batch size is used)
     - Implement model testing on the testing subset with [accuracy](https://developers.google.com/machine-learning/crash-course/classification/accuracy-precision-recall) as a metric
@@ -59,7 +59,7 @@ Train a simple CNN model with `LogMelFilterBanks` features for a binary classifi
     - Choose any of trained models as a baseline for the next stage task
 
 
-4. Experiment with **`groups`** parameter of Conv2d layer:
+4. Experiment with **`groups`** parameter of Conv1d layer:
     ![Group convolution](group_convolution.png)
     - Set this parameter to different values (e.g. one of `{2, 4, 8, 16}`) and train the model (while tracking all the metrics)
     - Attach a graph with dependency of **epoch training time** versus **groups** parameter, as well as **number of model parameters** and **FLOPs** versus **groups** and other
