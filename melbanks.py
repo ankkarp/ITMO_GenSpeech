@@ -8,6 +8,9 @@ from torchaudio import functional as F
 import matplotlib.pyplot as plt
 
 
+DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+# DEVICE = 'cuda:0'
+
 class LogMelFilterBanks(nn.Module):
     def __init__(self,
             n_fft: int = 400,
@@ -23,14 +26,16 @@ class LogMelFilterBanks(nn.Module):
             f_min_hz: float = 0.0,
             f_max_hz: Optional[float] = None,
             norm_mel: Optional[str] = None,
-            mel_scale: str = 'htk'
+            mel_scale: str = 'htk',
+            device=DEVICE
         ):
         super(LogMelFilterBanks, self).__init__()
         # general params and params defined by the exercise
         self.n_fft = n_fft
         self.samplerate = samplerate
         self.window_length = n_fft
-        self.window = torch.hann_window(self.window_length)
+        self.window = torch.hann_window(self.window_length).to(device)
+        self.device = device
         # Do correct initialization of stft params below:
         self.hop_length = hop_length
         self.n_mels = n_mels
@@ -58,7 +63,7 @@ class LogMelFilterBanks(nn.Module):
             sample_rate=self.samplerate,
             norm=self.norm_mel,
             mel_scale=self.mel_scale
-        )
+        ).to(self.device)
 
     def spectrogram(self, x):
         return torch.stft(
@@ -96,21 +101,24 @@ class LogMelFilterBanks(nn.Module):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', '--input-file', type=str, help='Path to input WAV-file')
+    parser.add_argument('--plot', type=str, help='Whether to plot spectogram comparison')
     args = parser.parse_args()
 
     signal, sr = torchaudio.load(args.input_file)
 
+    signal = signal.to(DEVICE)
     melspec = torchaudio.transforms.MelSpectrogram(
         hop_length=160,
         n_mels=80
-    )(signal)
-    logmelbanks = LogMelFilterBanks()(signal)
-    fig, axes = plt.subplots(2, figsize=(10, 7))
-    axes[0].imshow(logmelbanks[0], aspect='auto')
-    axes[0].set_title('HW')
-    axes[1].imshow(torch.log(melspec + 1e-6).numpy()[0], aspect='auto')
-    axes[1].set_title('Torch (reference)')
-    plt.savefig('plots.png')
+    ).to(DEVICE)(signal)
+    logmelbanks = LogMelFilterBanks().to(DEVICE)(signal)
+    if args.plot:
+        fig, axes = plt.subplots(2, figsize=(10, 7))
+        axes[0].imshow(logmelbanks[0], aspect='auto')
+        axes[0].set_title('HW')
+        axes[1].imshow(torch.log(melspec + 1e-6).numpy()[0], aspect='auto')
+        axes[1].set_title('Torch (reference)')
+        plt.savefig('plots.png')
 
     assert torch.log(melspec + 1e-6).shape == logmelbanks.shape
     assert torch.allclose(torch.log(melspec + 1e-6), logmelbanks)
