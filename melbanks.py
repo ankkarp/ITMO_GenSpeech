@@ -101,7 +101,7 @@ class LogMelFilterBanks(nn.Module):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', '--input-file', type=str, help='Path to input WAV-file')
-    parser.add_argument('--plot', type=str, help='Whether to plot spectogram comparison')
+    parser.add_argument('--plot', action='store_true', help='Whether to plot spectogram comparison')
     args = parser.parse_args()
 
     signal, sr = torchaudio.load(args.input_file)
@@ -112,12 +112,17 @@ if __name__ == "__main__":
         n_mels=80
     ).to(DEVICE)(signal)
     logmelbanks = LogMelFilterBanks().to(DEVICE)(signal)
+    if DEVICE == torch.device('cuda'):
+        logmelbanks = logmelbanks.to('cpu')
+        melspec = melspec.to('cpu')
     if args.plot:
         fig, axes = plt.subplots(2, figsize=(10, 7))
         axes[0].imshow(logmelbanks[0], aspect='auto')
         axes[0].set_title('HW')
         axes[1].imshow(torch.log(melspec + 1e-6).numpy()[0], aspect='auto')
-        axes[1].set_title('Torch (reference)')
+        axes[1].set_title('TorchAudio (reference)')
+        axes[0].set_axis_off()
+        axes[1].set_axis_off()
         plt.savefig('plots.png')
 
     assert torch.log(melspec + 1e-6).shape == logmelbanks.shape
