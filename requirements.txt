@@ -1,0 +1,4 @@
+https://github.com/kpu/kenlm/archive/master.zip
+levenshtein
+transformers
+numpy<2.0.0
